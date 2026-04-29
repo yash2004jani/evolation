@@ -15,6 +15,7 @@ class _HomePageState extends State<HomePage> {
   int _currentPage = 1;
   bool _isLoading = false;
   bool _hasMore = true;
+  String _priceFilter = "";
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -52,7 +53,7 @@ class _HomePageState extends State<HomePage> {
         "CategoryId": "",
         "SubCategoryId": "",
         "BrandId": "",
-        "PriceFilter": "",
+        "PriceFilter": _priceFilter,
         "SearchProductName": "",
         "LanguageId": "",
       });
@@ -75,6 +76,12 @@ class _HomePageState extends State<HomePage> {
             _products.addAll(
               productList.map((json) => Product.fromJson(json)).toList(),
             );
+            // Client-side sorting as a fallback if API sorting is not reflecting
+            if (_priceFilter == '1') {
+              _products.sort((a, b) => double.parse(a.price).compareTo(double.parse(b.price)));
+            } else if (_priceFilter == '2') {
+              _products.sort((a, b) => double.parse(b.price).compareTo(double.parse(a.price)));
+            }
             _currentPage++;
           });
         }
@@ -100,6 +107,63 @@ class _HomePageState extends State<HomePage> {
         ),
         backgroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (String value) {
+              if (_priceFilter != value) {
+                setState(() {
+                  _priceFilter = value;
+                  _products.clear();
+                  _currentPage = 1;
+                  _hasMore = true;
+                });
+                _fetchProducts();
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: '',
+                child: Text('Default'),
+              ),
+              const PopupMenuItem<String>(
+                value: '1',
+                child: Text('Price Low To High'),
+              ),
+              const PopupMenuItem<String>(
+                value: '2',
+                child: Text('Price High To Low'),
+              ),
+            ],
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 8),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.swap_vert, color: Colors.black54, size: 18),
+                  const SizedBox(width: 4),
+                  Text(
+                    _priceFilter == '1'
+                        ? 'Price Low To High'
+                        : _priceFilter == '2'
+                            ? 'Price High To Low'
+                            : 'Sort By',
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Icon(Icons.keyboard_arrow_down, color: Colors.black54, size: 20),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       body: _products.isEmpty
           ? (_isLoading
@@ -140,7 +204,6 @@ class _HomePageState extends State<HomePage> {
                   if (index == _products.length) {
                     return const Center(child: CircularProgressIndicator());
                   }
-
                   final product = _products[index];
                   return Padding(
                     padding: const EdgeInsets.all(10),
