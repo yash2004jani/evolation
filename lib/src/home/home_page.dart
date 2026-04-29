@@ -76,7 +76,7 @@ class _HomePageState extends State<HomePage> {
             _products.addAll(
               productList.map((json) => Product.fromJson(json)).toList(),
             );
-            // Client-side sorting as a fallback if API sorting is not reflecting
+
             if (_priceFilter == '1') {
               _products.sort((a, b) => double.parse(a.price).compareTo(double.parse(b.price)));
             } else if (_priceFilter == '2') {
